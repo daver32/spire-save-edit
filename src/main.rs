@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use base64::engine::general_purpose;
 use base64::Engine;
 use clap::{Parser, Subcommand};
@@ -29,55 +31,39 @@ enum Command {
     FromJson,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = CliArgs::parse();
 
     match args.command {
         Command::ToJson => save_to_json(&args),
         Command::FromJson => json_to_save(&args),
-    };
+    }?;
+
+    Ok(())
 }
 
-fn save_to_json(args: &CliArgs) {
-    let base64_data = match std::fs::read_to_string(&args.in_path) {
-        Ok(data) => data,
-        Err(err) => {
-            eprintln!("Failed to read input file \"{}\" ({})", &args.in_path, err);
-            return;
-        },
-    };
+fn save_to_json(args: &CliArgs) -> Result<(), Box<dyn Error>> {
+    let base64_data = std::fs::read_to_string(&args.in_path)?;
 
-    let mut data = match general_purpose::STANDARD.decode(base64_data) {
-        Ok(data) => data,
-        Err(err) => {
-            eprintln!("Failed to decode base64 ({})", err);
-            return;
-        },
-    };
+    let mut data = general_purpose::STANDARD.decode(base64_data)?;
 
     encode_or_decode(data.as_mut_slice(), KEY.as_bytes());
 
-    if let Err(err) = std::fs::write(&args.out_path, &data) {
-        eprintln!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
-    }
+    std::fs::write(&args.out_path, &data)?;
+
+    Ok(())
 }
 
-fn json_to_save(args: &CliArgs) {
-    let mut input_data = match std::fs::read(&args.in_path) {
-        Ok(bytes) => bytes,
-        Err(err) => {
-            eprintln!("Failed to read input file \"{}\" ({})", &args.in_path, err);
-            return;
-        },
-    };
+fn json_to_save(args: &CliArgs) -> Result<(), Box<dyn Error>> {
+    let mut input_data = std::fs::read(&args.in_path)?;
 
     encode_or_decode(input_data.as_mut_slice(), KEY.as_bytes());
 
     let base64_data = general_purpose::STANDARD.encode(input_data);
 
-    if let Err(err) = std::fs::write(&args.out_path, base64_data) {
-        eprintln!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
-    }
+    std::fs::write(&args.out_path, base64_data)?;
+
+    Ok(())
 }
 
 fn encode_or_decode(data: &mut [u8], key: &[u8]) {
