@@ -42,7 +42,7 @@ fn save_to_json(args: &CliArgs) {
     let base64_data = match std::fs::read_to_string(&args.in_path) {
         Ok(data) => data,
         Err(err) => {
-            println!("Failed to read input file \"{}\" ({})", &args.in_path, err);
+            eprintln!("Failed to read input file \"{}\" ({})", &args.in_path, err);
             return;
         },
     };
@@ -50,7 +50,7 @@ fn save_to_json(args: &CliArgs) {
     let mut data = match general_purpose::STANDARD.decode(base64_data) {
         Ok(data) => data,
         Err(err) => {
-            println!("Failed to decode base64 ({})", err);
+            eprintln!("Failed to decode base64 ({})", err);
             return;
         },
     };
@@ -58,7 +58,7 @@ fn save_to_json(args: &CliArgs) {
     encode_or_decode(data.as_mut_slice(), KEY.as_bytes());
 
     if let Err(err) = std::fs::write(&args.out_path, &data) {
-        println!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
+        eprintln!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
     }
 }
 
@@ -66,7 +66,7 @@ fn json_to_save(args: &CliArgs) {
     let mut input_data = match std::fs::read(&args.in_path) {
         Ok(bytes) => bytes,
         Err(err) => {
-            println!("Failed to read input file \"{}\" ({})", &args.in_path, err);
+            eprintln!("Failed to read input file \"{}\" ({})", &args.in_path, err);
             return;
         },
     };
@@ -76,7 +76,7 @@ fn json_to_save(args: &CliArgs) {
     let base64_data = general_purpose::STANDARD.encode(input_data);
 
     if let Err(err) = std::fs::write(&args.out_path, base64_data) {
-        println!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
+        eprintln!("Failed to write to output file \"{}\", ({})", &args.out_path, err);
     }
 }
 
